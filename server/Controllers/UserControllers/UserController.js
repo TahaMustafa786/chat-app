@@ -11,6 +11,7 @@ const {
   Return404,
   decryptPass,
 } = require("../../functions/functions");
+const mongoose = require("mongoose");
 
 const registerSchema = Joi.object({
   name: Joi.string().required(),
@@ -73,4 +74,34 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+const findUser = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return Return400(res, "Not a valid mongo object id");
+    }
+    const user = await userModel.findById(id);
+    if (!user) {
+      return Return404(req, "User not found");
+    }
+    return Return200(res, "User Found", {
+      user: { _id: user._id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    return Return500(res, error);
+  }
+};
+
+const getUsers = async (req, res) => {
+  try {
+    const users = await userModel.find();
+    if (users.length == 0) {
+      return Return404(res, "No Users found");
+    }
+    return Return200(res, "Users", { users });
+  } catch (error) {
+    return Return500(res, error);
+  }
+};
+
+module.exports = { register, login, findUser, getUsers };
